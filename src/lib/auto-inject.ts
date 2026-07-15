@@ -3,7 +3,6 @@
  * Runs on dashboard load — converts seed.json to ParsedReport format
  */
 import { getLocalReports, saveLocalReport } from "./local-db";
-import type { ParsedReport } from "./excel-parser";
 
 const DRIVE_URL = "https://drive.google.com/uc?export=download&id=1IlcAYY82Qyi594JHm4ZPmPmIuBf3Hf3u";
 

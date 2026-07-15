@@ -86,20 +86,16 @@ function pctDiff(curr: number, prev: number | undefined): number | undefined {
 
 function Dashboard() {
   const { reportId } = Route.useSearch();
-  const [autoInjected, setAutoInjected] = useState(false);
+  const [autoReady, setAutoReady] = useState(false);
 
   useEffect(() => {
-    autoInjectFromDrive().then((result) => {
-      if (result.injected) {
-        console.log("[dashboard] Drive data auto-injected:", result.reportId);
-      }
-      setAutoInjected(true);
-    });
+    autoInjectFromDrive().finally(() => setAutoReady(true));
   }, []);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["latestReport", reportId, autoInjected],
+    queryKey: ["latestReport", reportId, autoReady],
     queryFn: () => getLatestReportFull({ data: { reportId } }),
+    enabled: autoReady,
   });
   const [dark, setDark] = useState(() => {
     if (typeof document !== "undefined") {
@@ -127,20 +123,20 @@ function Dashboard() {
   if (isLoading)
     return (
       <div className="p-8 text-center" dir="rtl">
-        ط¬ط§ط±ظٹ ط§ظ„طھط­ظ…ظٹظ„...
+        جاري التحميل...
       </div>
     );
 
   function handleExport() {
     if (!data) {
-      toast.error("ظ„ط§ طھظˆط¬ط¯ ط¨ظٹط§ظ†ط§طھ ظ„ظ„طھطµط¯ظٹط±");
+      toast.error("لا توجد بيانات للتصدير");
       return;
     }
     try {
       exportReportToExcel(data as any);
-      toast.success("طھظ… طھطµط¯ظٹط± ط§ظ„ظ…ظ„ظپ");
+      toast.success("تم تصدير الملف");
     } catch (e) {
-      toast.error("ظپط´ظ„ ط§ظ„طھطµط¯ظٹط±");
+      toast.error("فشل التصدير");
       console.error(e);
     }
   }
@@ -180,7 +176,7 @@ function Dashboard() {
             </div>
             <div className="relative">
               <h1 className="text-xl sm:text-2xl font-black text-primary-dark tracking-wide rotate-1">
-                ظ„ظˆط­ط© ط§ظ„طھط­ظƒظ… ط§ظ„طھظ†ظپظٹط°ظٹط©
+                لوحة التحكم التنفيذية
               </h1>
               <div className="absolute -bottom-2 -left-2 -right-2 h-2 bg-accent/20 -skew-x-12 rounded" />
             </div>
@@ -191,10 +187,10 @@ function Dashboard() {
               size="sm"
               onClick={handleExport}
               className="px-3 sm:px-4 rounded-full font-bold bg-white shadow-sm border border-muted hover:border-primary/30"
-              title="طھطµط¯ظٹط± Excel"
+              title="تصدير Excel"
             >
               <Download className="h-4 w-4 sm:ml-2 text-info" />
-              <span className="hidden sm:inline">طھطµط¯ظٹط±</span>
+              <span className="hidden sm:inline">تصدير</span>
             </Button>
             <Link to="/history">
               <Button
@@ -203,7 +199,7 @@ function Dashboard() {
                 className="px-3 sm:px-4 rounded-full font-bold bg-white shadow-sm border border-muted hover:border-primary/30"
               >
                 <History className="h-4 w-4 sm:ml-2 text-accent-dark" />
-                <span className="hidden sm:inline">ط§ظ„ط³ط¬ظ„</span>
+                <span className="hidden sm:inline">السجل</span>
               </Button>
             </Link>
             <PrintDialog
@@ -230,10 +226,10 @@ function Dashboard() {
       <div className="print-only px-4 py-3 border-b" dir="rtl">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold">
-            ظ„ظˆط­ط© ط§ظ„طھط­ظƒظ… ط§ظ„طھظ†ظپظٹط°ظٹط© â€” ط§ظ„ظ…ط¨ظٹط¹ط§طھ ظˆط§ظ„طھط­طµظٹظ„
+            لوحة التحكم التنفيذية — المبيعات والتحصيل
           </h1>
           <div className="text-xs">
-            طھط§ط±ظٹط® ط§ظ„ط·ط¨ط§ط¹ط©:{" "}
+            تاريخ الطباعة:{" "}
             {new Date().toLocaleString("ar-EG-u-nu-latn", {
               dateStyle: "full",
               timeStyle: "short",
@@ -247,7 +243,7 @@ function Dashboard() {
           <UploadDialog
             onUploaded={() => {
               refetch();
-              toast.success("طھظ… ط§ظ„طھط­ط¯ظٹط«");
+              toast.success("تم التحديث");
             }}
           />
         </div>
@@ -255,7 +251,7 @@ function Dashboard() {
         {!data && (
           <Card>
             <CardContent className="p-12 text-center text-muted-foreground">
-              ظ„ط§ طھظˆط¬ط¯ طھظ‚ط§ط±ظٹط± ظ…ط³طھظˆط±ط¯ط© ط¨ط¹ط¯. ط§ط±ظپط¹ ظ…ظ„ظپط§طھظƒ ظ„ظ„ط¨ط¯ط،.
+              لا توجد تقارير مستوردة بعد. ارفع ملفاتك للبدء.
             </CardContent>
           </Card>
         )}
@@ -391,7 +387,7 @@ function DashboardContent({
 
   const totalDebt = getReportTotalDebt(r);
 
-  // Active clients â€” customers with sales activity today (had an invoice)
+  // Active clients — customers with sales activity today (had an invoice)
   const todayCustomers = data.customers.filter((c) => c.sales_amount > 0);
   const topBySales = [...todayCustomers]
     .sort((a, b) => b.sales_amount - a.sales_amount)
@@ -424,7 +420,7 @@ function DashboardContent({
     .slice(0, 5);
   const totalProductQty = data.products.reduce((s, p) => s + p.total_qty, 0);
 
-  // Risky â€” filtered to today's customers
+  // Risky — filtered to today's customers
   const noCollection = todayCustomers.filter(
     (c) => c.sales_amount > 0 && c.collected_amount === 0,
   );
@@ -434,8 +430,8 @@ function DashboardContent({
   // Distribution chart Data
   const categoryDistribution = useMemo(() => {
     const categories = [
-      { category: "ط®ط§ظ…ط§طھ", total_qty: r.raw_material_qty || 0 },
-      { category: "ط¹ظ„ظپ", total_qty: r.feed_qty || 0 },
+      { category: "خامات", total_qty: r.raw_material_qty || 0 },
+      { category: "علف", total_qty: r.feed_qty || 0 },
     ].filter((c) => c.total_qty > 0);
 
     let total = categories.reduce((acc, curr) => acc + curr.total_qty, 0);
@@ -454,19 +450,19 @@ function DashboardContent({
       .filter(
         (p) =>
           p.total_qty > 0 &&
-          !["طھطµظ†ظٹط¹", "ط¹ظ…ط§ظ„", "ظ†ظ‚ظ„"].includes(p.product_name.trim()),
+          !["تصنيع", "عمال", "نقل"].includes(p.product_name.trim()),
       )
       .sort((a, b) => b.total_qty - a.total_qty)
       .map((p) => {
         let color = "#3b82f6";
-        if (/ط°ط±ظ‡|ط°ط±ط©/.test(p.product_name)) color = "#2563eb";
-        else if (/ظ†ط®ط§ظ„ظ‡|ظ†ط®ط§ظ„ط©|ط±ط¯ط©/.test(p.product_name)) color = "#0e7490";
-        else if (/طµظˆظٹط§/.test(p.product_name)) color = "#7c3aed";
-        else if (/ظƒط³ط¨/.test(p.product_name)) color = "#d97706";
-        else if (/ط±ط¬ظٹط¹/.test(p.product_name)) color = "#dc2626";
-        else if (/ط¯ظٹ ط¯ظٹ/.test(p.product_name)) color = "#10b981";
-        else if (/ط­ظ„ط§ط¨/.test(p.product_name)) color = "#3b82f6";
-        else if (/ط¨ط±ظٹظ…ظƒط³/.test(p.product_name)) color = "#a855f7";
+        if (/ذره|ذرة/.test(p.product_name)) color = "#2563eb";
+        else if (/نخاله|نخالة|ردة/.test(p.product_name)) color = "#0e7490";
+        else if (/صويا/.test(p.product_name)) color = "#7c3aed";
+        else if (/كسب/.test(p.product_name)) color = "#d97706";
+        else if (/رجيع/.test(p.product_name)) color = "#dc2626";
+        else if (/دي دي/.test(p.product_name)) color = "#10b981";
+        else if (/حلاب/.test(p.product_name)) color = "#3b82f6";
+        else if (/بريمكس/.test(p.product_name)) color = "#a855f7";
 
         return {
           name: p.product_name,
@@ -506,21 +502,21 @@ function DashboardContent({
   if (concentrationPct > 50)
     alerts.push({
       type: "danger",
-      title: "طھط±ظƒظٹط² ظ…ط¨ظٹط¹ط§طھ ظ…ط±طھظپط¹",
-      msg: `ط£ط¹ظ„ظ‰ 3 ط¹ظ…ظ„ط§ط، ظٹظ…ط«ظ„ظˆظ† ${concentrationPct.toFixed(1)}% ظ…ظ† ط§ظ„ظ…ط¨ظٹط¹ط§طھ`,
+      title: "تركيز مبيعات مرتفع",
+      msg: `أعلى 3 عملاء يمثلون ${concentrationPct.toFixed(1)}% من المبيعات`,
     });
   if (r.collection_rate < 0.5 && r.total_sales > 0)
     alerts.push({
       type: "warning",
-      title: "ظ†ط³ط¨ط© طھط­طµظٹظ„ ظ…ظ†ط®ظپط¶ط©",
-      msg: `ظ†ط³ط¨ط© ط§ظ„طھط­طµظٹظ„ ط§ظ„ظٹظˆظ… ${fmtPct(r.collection_rate)}`,
+      title: "نسبة تحصيل منخفضة",
+      msg: `نسبة التحصيل اليوم ${fmtPct(r.collection_rate)}`,
     });
   const colDiff = y ? pctDiff(r.total_collected, y.total_collected) : undefined;
   if (colDiff !== undefined && colDiff < -20)
     alerts.push({
       type: "warning",
-      title: "طھط±ط§ط¬ط¹ ط§ظ„طھط­طµظٹظ„",
-      msg: `ط§ظ†ط®ظپط§ط¶ ${Math.abs(colDiff).toFixed(1)}% ط¹ظ† ط£ظ…ط³`,
+      title: "تراجع التحصيل",
+      msg: `انخفاض ${Math.abs(colDiff).toFixed(1)}% عن أمس`,
     });
   const recDiff = y
     ? pctDiff(r.total_receivables, y.total_receivables)
@@ -528,33 +524,33 @@ function DashboardContent({
   if (recDiff !== undefined && recDiff > 10)
     alerts.push({
       type: "warning",
-      title: "ظ†ظ…ظˆ ط§ظ„ط°ظ…ظ…",
-      msg: `ط²ظٹط§ط¯ط© ط§ظ„ط°ظ…ظ… ط¨ظ€ ${recDiff.toFixed(1)}%`,
+      title: "نمو الذمم",
+      msg: `زيادة الذمم بـ ${recDiff.toFixed(1)}%`,
     });
   if (noCollection.length > 5)
     alerts.push({
       type: "info",
-      title: "ط¹ظ…ظ„ط§ط، ط¨ط¯ظˆظ† طھط­طµظٹظ„",
-      msg: `${noCollection.length} ط¹ظ…ظٹظ„ ط¨ظ…ط¨ظٹط¹ط§طھ ط¨ط¯ظˆظ† ط£ظٹ طھط­طµظٹظ„`,
+      title: "عملاء بدون تحصيل",
+      msg: `${noCollection.length} عميل بمبيعات بدون أي تحصيل`,
     });
   if (highRisk.length > 0)
     alerts.push({
       type: "danger",
-      title: "ط¹ظ…ظ„ط§ط، ط®ط·ط± ط¹ط§ظ„ظٹ",
-      msg: `${highRisk.length} ط¹ظ…ظٹظ„ ط¶ظ…ظ† ط§ظ„ظ…ط®ط§ط·ط± ط§ظ„ط¹ط§ظ„ظٹط©`,
+      title: "عملاء خطر عالي",
+      msg: `${highRisk.length} عميل ضمن المخاطر العالية`,
     });
   if (m && pctDiff(r.total_sales, m.total_sales)! < -15)
     alerts.push({
       type: "warning",
-      title: "طھط±ط§ط¬ط¹ ط§ظ„ظ…ط¨ظٹط¹ط§طھ ط´ظ‡ط±ظٹط§ظ‹",
-      msg: `ط§ظ†ط®ظپط§ط¶ ${Math.abs(pctDiff(r.total_sales, m.total_sales)!).toFixed(1)}% ط¹ظ† ط§ظ„ط´ظ‡ط± ط§ظ„ظ…ط§ط¶ظٹ`,
+      title: "تراجع المبيعات شهرياً",
+      msg: `انخفاض ${Math.abs(pctDiff(r.total_sales, m.total_sales)!).toFixed(1)}% عن الشهر الماضي`,
     });
 
   return (
     <>
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-xl font-bold">
-          طھظ‚ط±ظٹط± ظٹظˆظ…{" "}
+          تقرير يوم{" "}
           {new Date(r.report_date).toLocaleDateString("ar-EG-u-nu-latn", {
             weekday: "long",
             year: "numeric",
@@ -572,15 +568,15 @@ function DashboardContent({
       {/* KPI Strip */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 print:grid-cols-4 gap-3 print:gap-2">
         <KpiCard
-          label="ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ…ط¨ظٹط¹ط§طھ"
+          label="إجمالي المبيعات"
           value={fmtMoney(r.total_sales)}
           tone="info"
           icon={<TrendingUp className="h-5 w-5" />}
           diff={pctDiff(r.total_sales, y?.total_sales)}
-          diffLabel="ط¹ظ† ط£ظ…ط³"
+          diffLabel="عن أمس"
         />
         <KpiCard
-          label="ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„طھط­طµظٹظ„"
+          label="إجمالي التحصيل"
           value={fmtMoney(r.total_collected_from_sheet ?? r.total_collected)}
           tone="success"
           icon={<Wallet className="h-5 w-5" />}
@@ -588,10 +584,10 @@ function DashboardContent({
             r.total_collected_from_sheet ?? r.total_collected,
             y ? (y.total_collected_from_sheet ?? y.total_collected) : undefined,
           )}
-          diffLabel="ط¹ظ† ط£ظ…ط³"
+          diffLabel="عن أمس"
         />
         <KpiCard
-          label="ظ†ط³ط¨ط© ط§ظ„طھط­طµظٹظ„"
+          label="نسبة التحصيل"
           value={fmtPct(r.collection_rate)}
           tone={
             r.collection_rate >= 0.7
@@ -603,47 +599,47 @@ function DashboardContent({
           icon={<Percent className="h-5 w-5" />}
         />
         <KpiCard
-          label="ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ…ط¯ظٹظˆظ†ظٹط©"
+          label="إجمالي المديونية"
           value={fmtMoney(totalDebt)}
           tone="danger"
           icon={<AlertCircle className="h-5 w-5" />}
           diff={y ? pctDiff(totalDebt, getReportTotalDebt(y)) : undefined}
-          diffLabel="ط¹ظ† ط£ظ…ط³"
+          diffLabel="عن أمس"
         />
         <KpiCard
-          label="ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظƒظ…ظٹط§طھ (ظƒظٹظ„ظˆ)"
+          label="إجمالي الكميات (كيلو)"
           value={fmtNumber(r.total_qty, 2)}
           tone="default"
           icon={<Boxes className="h-5 w-5" />}
           diff={pctDiff(r.total_qty, y?.total_qty)}
-          diffLabel="ط¹ظ† ط£ظ…ط³"
+          diffLabel="عن أمس"
         />
         <KpiCard
-          label="ظƒظ…ظٹط§طھ ط§ظ„ط®ط§ظ…ط§طھ"
+          label="كميات الخامات"
           value={fmtNumber(r.raw_material_qty, 2)}
           tone="default"
           icon={<Package className="h-5 w-5" />}
         />
         <KpiCard
-          label="ظƒظ…ظٹط§طھ ط§ظ„ط£ط¹ظ„ط§ظپ"
+          label="كميات الأعلاف"
           value={fmtNumber(r.feed_qty, 2)}
           tone="default"
           icon={<Package className="h-5 w-5" />}
         />
         <KpiCard
-          label="ط¹ط¯ط¯ ط§ظ„ط¹ظ…ظ„ط§ط،"
+          label="عدد العملاء"
           value={fmtNumber(r.customer_count)}
           tone="info"
           icon={<Users className="h-5 w-5" />}
         />
         <KpiCard
-          label="ط¹ط¯ط¯ ط§ظ„ظپظˆط§طھظٹط±"
+          label="عدد الفواتير"
           value={fmtNumber(r.invoice_count)}
           tone="info"
           icon={<FileText className="h-5 w-5" />}
         />
         <KpiCard
-          label="ظ…طھظˆط³ط· ط§ظ„ظپط§طھظˆط±ط©"
+          label="متوسط الفاتورة"
           value={fmtMoney(r.average_invoice)}
           tone="default"
           icon={<Receipt className="h-5 w-5" />}
@@ -658,11 +654,11 @@ function DashboardContent({
             <AlertTriangle className="h-8 w-8 text-destructive" />
             <div>
               <h3 className="font-bold text-destructive">
-                طھظ†ط¨ظٹظ‡: طھط±ظƒظٹط² ط¹ط§ظ„ظٹ ظپظٹ ط§ظ„ظ…ط¨ظٹط¹ط§طھ
+                تنبيه: تركيز عالي في المبيعات
               </h3>
               <p className="text-sm">
-                ط£ط¹ظ„ظ‰ 3 ط¹ظ…ظ„ط§ط، ظٹظ…ط«ظ„ظˆظ† {concentrationPct.toFixed(1)}% ظ…ظ† ط¥ط¬ظ…ط§ظ„ظٹ
-                ط§ظ„ظ…ط¨ظٹط¹ط§طھ â€” ط®ط·ط± ط§ط¹طھظ…ط§ط¯ظٹط© ظ…ط±طھظپط¹.
+                أعلى 3 عملاء يمثلون {concentrationPct.toFixed(1)}% من إجمالي
+                المبيعات — خطر اعتمادية مرتفع.
               </p>
             </div>
           </CardContent>
@@ -682,8 +678,8 @@ function DashboardContent({
           <CardHeader className="pb-4 border-b-2 border-dashed border-primary/20 mb-4">
             <CardTitle className="text-xl font-extrabold flex items-center justify-between w-full text-primary-dark">
               <span className="flex items-center gap-2">
-                <span className="text-2xl">ًں“ˆ</span>
-                <span>طھظˆط²ظٹط¹ ط§ظ„ظ…ط¨ظٹط¹ط§طھ (ط®ط§ظ…ط§طھ / ط£ط¹ظ„ط§ظپ) ًں“ٹ</span>
+                <span className="text-2xl">📈</span>
+                <span>توزيع المبيعات (خامات / أعلاف) 📊</span>
               </span>
             </CardTitle>
           </CardHeader>
@@ -693,7 +689,7 @@ function DashboardContent({
           >
             {categoryDistribution.length === 0 ? (
               <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-                ظ„ط§ طھظˆط¬ط¯ ط¨ظٹط§ظ†ط§طھ ظƒط§ظپظٹط© ظ„ظ„طھطµظ†ظٹظپ
+                لا توجد بيانات كافية للتصنيف
               </div>
             ) : (
               <div className="w-full h-full flex flex-col justify-center relative">
@@ -722,8 +718,8 @@ function DashboardContent({
                       }}
                       itemStyle={{ fontWeight: "bold", fontSize: "13px" }}
                       formatter={(value: number) => [
-                        `${fmtNumber(value, 2)} ظƒظٹظ„ظˆ`,
-                        "ط§ظ„ظƒظ…ظٹط©",
+                        `${fmtNumber(value, 2)} كيلو`,
+                        "الكمية",
                       ]}
                     />
                   </PieChart>
@@ -739,7 +735,7 @@ function DashboardContent({
                     )}
                   </span>
                   <span className="text-[10px] text-muted-foreground font-semibold">
-                    ظƒظٹظ„ظˆ
+                    كيلو
                   </span>
                 </div>
                 {/* Custom Legend underneath chart */}
@@ -751,7 +747,7 @@ function DashboardContent({
                         style={{ backgroundColor: entry.color }}
                       />
                       <span className="text-muted-foreground text-xs font-bold">
-                        {entry.name} ({fmtNumber(entry.value, 1)} ظƒظٹظ„ظˆ)
+                        {entry.name} ({fmtNumber(entry.value, 1)} كيلو)
                       </span>
                     </div>
                   ))}
@@ -766,8 +762,8 @@ function DashboardContent({
           <CardHeader className="pb-4 border-b-2 border-dashed border-primary/20 mb-4">
             <CardTitle className="text-xl font-extrabold flex items-center justify-between w-full text-primary-dark">
               <span className="flex items-center gap-2">
-                <span className="text-2xl">ًں“ˆ</span>
-                <span>ط§طھط¬ط§ظ‡ ط§ظ„ظ…ط¨ظٹط¹ط§طھ ظˆط§ظ„طھط­طµظٹظ„ ًں“ˆ</span>
+                <span className="text-2xl">📈</span>
+                <span>اتجاه المبيعات والتحصيل 📈</span>
               </span>
             </CardTitle>
           </CardHeader>
@@ -841,7 +837,7 @@ function DashboardContent({
                   }}
                   itemStyle={{ fontWeight: "bold", fontSize: "13px" }}
                   formatter={(value: number) => [
-                    `${value.toLocaleString()} ط¬.ظ…`,
+                    `${value.toLocaleString()} ج.م`,
                     undefined,
                   ]}
                   labelStyle={{
@@ -861,7 +857,7 @@ function DashboardContent({
                   strokeWidth={3}
                   fillOpacity={1}
                   fill="url(#colorSales)"
-                  name="ط§ظ„ظ…ط¨ظٹط¹ط§طھ"
+                  name="المبيعات"
                 />
                 <Area
                   type="monotone"
@@ -870,7 +866,7 @@ function DashboardContent({
                   strokeWidth={3}
                   fillOpacity={1}
                   fill="url(#colorCollected)"
-                  name="ط§ظ„طھط­طµظٹظ„"
+                  name="التحصيل"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -880,28 +876,28 @@ function DashboardContent({
 
       <div className="grid lg:grid-cols-2 print:grid-cols-2 gap-4">
         <TopList
-          title="ط£ظƒط¨ط± 10 ط¹ظ…ظ„ط§ط، ط¨ط§ظ„ظ…ط¨ظٹط¹ط§طھ"
+          title="أكبر 10 عملاء بالمبيعات"
           items={topBySales.map((c) => ({
             name: c.customer_name,
             value: fmtMoney(c.sales_amount),
           }))}
         />
         <TopList
-          title="ط£ظƒط¨ط± 10 ظ…ط­طµظ„ظٹظ†"
+          title="أكبر 10 محصلين"
           items={topByCollection.map((c) => ({
             name: c.customer_name,
             value: fmtMoney(c.collected_amount),
           }))}
         />
         <TopList
-          title="ط£ظƒط¨ط± 10 ط¨ط§ظ„ظƒظ…ظٹط§طھ (ظƒظٹظ„ظˆ)"
+          title="أكبر 10 بالكميات (كيلو)"
           items={topByQty.map((c) => ({
             name: c.customer_name,
             value: fmtNumber(c.total_qty, 2),
           }))}
         />
         <TopList
-          title="ط£ظƒط¨ط± 10 ظ…ط¯ظٹظˆظ†ظٹظ†"
+          title="أكبر 10 مديونين"
           items={topDebtors.map((c) => ({
             name: c.customer_name,
             value: fmtMoney(c.outstanding_amount),
@@ -914,7 +910,7 @@ function DashboardContent({
         <CardHeader className="pb-4 border-b-2 border-dashed border-primary/20 mb-4">
           <CardTitle className="text-base font-extrabold flex flex-row-reverse items-center gap-2 text-foreground justify-between">
             <span className="flex items-center gap-2">
-              <span>طھظپطµظٹظ„ ط§ظ„ظ…ظ†طھط¬ط§طھ (ظƒظ…ظٹط§طھ ظˆظ‚ظٹظ…)</span>
+              <span>تفصيل المنتجات (كميات وقيم)</span>
               <List className="h-5 w-5 text-emerald-500 shrink-0" />
             </span>
           </CardTitle>
@@ -922,7 +918,7 @@ function DashboardContent({
         <CardContent className="px-4 py-2">
           {productSalesData.length === 0 ? (
             <div className="flex justify-center text-muted-foreground text-sm">
-              ظ„ط§ طھظˆط¬ط¯ ظ…ط¨ظٹط¹ط§طھ ط£طµظ†ط§ظپ
+              لا توجد مبيعات أصناف
             </div>
           ) : (
             <div className="space-y-1.5" dir="rtl">
@@ -949,7 +945,7 @@ function DashboardContent({
                         }}
                       >
                         <span className="tabular-nums font-black whitespace-nowrap">
-                          {fmtNumber(p.qty, 1)} ظƒظٹظ„ظˆ
+                          {fmtNumber(p.qty, 1)} كيلو
                         </span>
                       </div>
                     </div>
@@ -970,13 +966,13 @@ function DashboardContent({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-accent" />
-            ظ…ط­ط±ظƒ ط§ظ„طھظ†ط¨ظٹظ‡ط§طھ
+            محرك التنبيهات
           </CardTitle>
         </CardHeader>
         <CardContent>
           {!alerts.length && (
             <p className="text-muted-foreground text-sm">
-              ظ„ط§ طھظˆط¬ط¯ طھظ†ط¨ظٹظ‡ط§طھ ط­ط±ط¬ط©. ط§ظ„ط£ظ…ظˆط± طھط³ظٹط± ط¨ط´ظƒظ„ ط·ط¨ظٹط¹ظٹ.
+              لا توجد تنبيهات حرجة. الأمور تسير بشكل طبيعي.
             </p>
           )}
           <div className="grid md:grid-cols-2 gap-2 print:grid-cols-2">
@@ -1008,7 +1004,7 @@ function DashboardContent({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-extrabold">
             <History className="h-5 w-5 text-accent" />
-            ظ…ظ‚ط§ط±ظ†ط© ط²ظ…ظ†ظٹط©
+            مقارنة زمنية
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -1017,19 +1013,19 @@ function DashboardContent({
               <thead className="bg-muted/60">
                 <tr>
                   <th className="p-3 text-right font-extrabold text-sm sm:text-base text-foreground border-b border-slate-100 dark:border-slate-800">
-                    ط§ظ„ظ…ط¤ط´ط±
+                    المؤشر
                   </th>
                   <th className="p-3 text-center font-extrabold text-sm sm:text-base text-foreground border-b border-slate-100 dark:border-slate-800">
-                    ط§ظ„ظٹظˆظ…
+                    اليوم
                   </th>
                   <th className="p-3 text-center font-extrabold text-sm sm:text-base text-foreground border-b border-slate-100 dark:border-slate-800">
-                    ط£ظ…ط³
+                    أمس
                   </th>
                   <th className="p-3 text-center font-extrabold text-sm sm:text-base text-foreground border-b border-slate-100 dark:border-slate-800">
-                    ظ†ظپط³ ط§ظ„ظٹظˆظ… ط§ظ„ط£ط³ط¨ظˆط¹ ط§ظ„ظ…ط§ط¶ظٹ
+                    نفس اليوم الأسبوع الماضي
                   </th>
                   <th className="p-3 text-center font-extrabold text-sm sm:text-base text-foreground border-b border-slate-100 dark:border-slate-800">
-                    ط§ظ„ط´ظ‡ط± ط§ظ„ظ…ط§ط¶ظٹ
+                    الشهر الماضي
                   </th>
                 </tr>
               </thead>
@@ -1067,7 +1063,7 @@ function DashboardContent({
                     val: number | null | undefined,
                     isToday = false,
                   ) => {
-                    if (val === null || val === undefined) return "â€”";
+                    if (val === null || val === undefined) return "—";
                     const formatted =
                       k === "total_qty" ? fmtNumber(val, 2) : fmtMoney(val);
                     return (
@@ -1090,12 +1086,12 @@ function DashboardContent({
                     >
                       <td className="p-3 font-bold text-sm sm:text-base text-right text-foreground">
                         {k === "total_sales"
-                          ? "ط§ظ„ظ…ط¨ظٹط¹ط§طھ"
+                          ? "المبيعات"
                           : k === "total_collected"
-                            ? "ط§ظ„طھط­طµظٹظ„"
+                            ? "التحصيل"
                             : k === "total_qty"
-                              ? "ط§ظ„ظƒظ…ظٹط§طھ ظƒط¬ظ…"
-                              : "ط¥ط¬ظ…ط§ظ„ظٹ ط§ظ„ظ…ط¯ظٹظˆظ†ظٹط© (ط§ظ„ط°ظ…ظ…)"}
+                              ? "الكميات كجم"
+                              : "إجمالي المديونية (الذمم)"}
                       </td>
                       <td className="p-3 text-center text-sm sm:text-base tabular-nums">
                         {renderCell(todayVal, true)}
@@ -1149,19 +1145,19 @@ function OpeningBalanceEditor({
   async function save() {
     const num = parseFloat(val);
     if (isNaN(num) || num < 0) {
-      toast.error("ظ‚ظٹظ…ط© ط؛ظٹط± طµط­ظٹط­ط©");
+      toast.error("قيمة غير صحيحة");
       return;
     }
     setSaving(true);
     try {
       await updateOpeningBalance({ data: { reportId, openingBalance: num } });
-      toast.success("طھظ… طھط­ط¯ظٹط« ط§ظ„ظ…ط¯ظٹظˆظ†ظٹط© ط§ظ„ظ‚ط¯ظٹظ…ط©");
+      toast.success("تم تحديث المديونية القديمة");
       if (isMounted.current) {
         setEditing(false);
         onUpdated();
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "ظپط´ظ„ ط§ظ„طھط­ط¯ظٹط«");
+      toast.error(e instanceof Error ? e.message : "فشل التحديث");
     } finally {
       if (isMounted.current) {
         setSaving(false);
@@ -1175,9 +1171,9 @@ function OpeningBalanceEditor({
         onClick={() => setEditing(true)}
         className="text-xs sm:text-sm px-3 py-1.5 rounded-md border bg-card hover:bg-muted/50 transition flex items-center gap-2"
       >
-        <span className="text-muted-foreground">ط§ظ„ظ…ط¯ظٹظˆظ†ظٹط© ط§ظ„ظ‚ط¯ظٹظ…ط©:</span>
+        <span className="text-muted-foreground">المديونية القديمة:</span>
         <span className="font-bold tabular-nums">{fmtMoney(value || 0)}</span>
-        <span className="text-accent text-[10px]">(طھط¹ط¯ظٹظ„)</span>
+        <span className="text-accent text-[10px]">(تعديل)</span>
       </button>
     );
   }
@@ -1190,10 +1186,10 @@ function OpeningBalanceEditor({
         value={val}
         onChange={(e) => setVal(e.target.value)}
         className="w-40 px-2 py-1.5 text-sm border rounded-md bg-background"
-        placeholder="ط§ظ„ظ…ط¯ظٹظˆظ†ظٹط© ط§ظ„ظ‚ط¯ظٹظ…ط©"
+        placeholder="المديونية القديمة"
       />
       <Button size="sm" onClick={save} disabled={saving}>
-        ط­ظپط¸
+        حفظ
       </Button>
       <Button
         size="sm"
@@ -1203,7 +1199,7 @@ function OpeningBalanceEditor({
           setVal(String(value || 0));
         }}
       >
-        ط¥ظ„ط؛ط§ط،
+        إلغاء
       </Button>
     </div>
   );
@@ -1245,7 +1241,7 @@ function TopList({
           ))}
           {!items.length && (
             <li className="text-muted-foreground text-center py-2">
-              ظ„ط§ طھظˆط¬ط¯ ط¨ظٹط§ظ†ط§طھ
+              لا توجد بيانات
             </li>
           )}
         </ol>
@@ -1269,10 +1265,10 @@ function ResetButton({ onDone }: { onDone: () => void }) {
     setLoading(true);
     try {
       await resetAllReports();
-      toast.success("طھظ… طھطµظپظٹط± ط¬ظ…ظٹط¹ ط§ظ„ط³ط¬ظ„ط§طھ");
+      toast.success("تم تصفير جميع السجلات");
       onDone();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "ظپط´ظ„ ط§ظ„طھطµظپظٹط±");
+      toast.error(e instanceof Error ? e.message : "فشل التصفير");
     } finally {
       if (isMounted.current) {
         setLoading(false);
@@ -1286,28 +1282,28 @@ function ResetButton({ onDone }: { onDone: () => void }) {
           variant="ghost"
           size="sm"
           className="px-2 sm:px-3 text-destructive hover:text-destructive"
-          title="طھطµظپظٹط±"
+          title="تصفير"
         >
           <Trash2 className="h-4 w-4 sm:ml-1" />
-          <span className="hidden sm:inline">طھطµظپظٹط±</span>
+          <span className="hidden sm:inline">تصفير</span>
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent dir="rtl">
         <AlertDialogHeader>
-          <AlertDialogTitle>طھطµظپظٹط± ط¬ظ…ظٹط¹ ط§ظ„ط³ط¬ظ„ط§طھطں</AlertDialogTitle>
+          <AlertDialogTitle>تصفير جميع السجلات؟</AlertDialogTitle>
           <AlertDialogDescription>
-            ط³ظٹطھظ… ط­ط°ظپ ط¬ظ…ظٹط¹ ط§ظ„طھظ‚ط§ط±ظٹط± ط§ظ„ظٹظˆظ…ظٹط© ظˆط§ظ„ط¹ظ…ظ„ط§ط، ظˆط§ظ„ظ…ظ†طھط¬ط§طھ ظˆط§ظ„ظ…ط¯ظٹظˆظ†ظٹط© ط§ظ„ظ‚ط¯ظٹظ…ط©
-            ظ†ظ‡ط§ط¦ظٹط§ظ‹. ظ‡ط°ط§ ط§ظ„ط¥ط¬ط±ط§ط، ظ„ط§ ظٹظ…ظƒظ† ط§ظ„طھط±ط§ط¬ط¹ ط¹ظ†ظ‡.
+            سيتم حذف جميع التقارير اليومية والعملاء والمنتجات والمديونية القديمة
+            نهائياً. هذا الإجراء لا يمكن التراجع عنه.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>ط¥ظ„ط؛ط§ط،</AlertDialogCancel>
+          <AlertDialogCancel>إلغاء</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleReset}
             disabled={loading}
             className="bg-destructive hover:bg-destructive/90"
           >
-            {loading ? "ط¬ط§ط±ظٹ ط§ظ„طھطµظپظٹط±..." : "ظ†ط¹ظ…طŒ طµظپظ‘ط± ط§ظ„ظƒظ„"}
+            {loading ? "جاري التصفير..." : "نعم، صفّر الكل"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

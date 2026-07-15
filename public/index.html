@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة التحكم المالية — Insight Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Cairo', sans-serif; background: #f5f5f5; min-height: 100vh; }
+    
+    .header {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      color: white; padding: 16px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .header h1 { font-size: 20px; font-weight: 800; }
+    .header .badge { 
+      background: #10b981; padding: 4px 12px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+    }
+    
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    
+    .kpi-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px; margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: white; border-radius: 16px; padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      border-right: 4px solid #3b82f6;
+    }
+    .kpi-card.success { border-right-color: #10b981; }
+    .kpi-card.warning { border-right-color: #f59e0b; }
+    .kpi-card.danger { border-right-color: #ef4444; }
+    .kpi-label { font-size: 13px; color: #6b7280; margin-bottom: 8px; }
+    .kpi-value { font-size: 24px; font-weight: 800; color: #1f2937; }
+    
+    .section {
+      background: white; border-radius: 16px; padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 24px;
+    }
+    .section h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #1f2937; }
+    
+    table { width: 100%; border-collapse: collapse; }
+    th { 
+      text-align: right; padding: 12px 16px; 
+      background: #f9fafb; font-weight: 700; font-size: 13px;
+      color: #4b5563; border-bottom: 2px solid #e5e7eb;
+    }
+    td { 
+      padding: 10px 16px; font-size: 14px;
+      border-bottom: 1px solid #f3f4f6; 
+    }
+    tr:hover td { background: #f9fafb; }
+    
+    .status { 
+      display: inline-block; padding: 2px 10px; border-radius: 12px;
+      font-size: 12px; font-weight: 600;
+    }
+    .status.active { background: #d1fae5; color: #065f46; }
+    .status.risk { background: #fef3c7; color: #92400e; }
+    
+    .loading { text-align: center; padding: 60px 20px; color: #9ca3af; }
+    .loading .spinner {
+      width: 40px; height: 40px; border: 4px solid #e5e7eb;
+      border-top-color: #3b82f6; border-radius: 50%;
+      animation: spin 1s linear infinite; margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .error { 
+      background: #fef2f2; color: #991b1b; padding: 16px;
+      border-radius: 8px; text-align: center; margin: 20px 0;
+    }
+    .refresh-btn {
+      background: #3b82f6; color: white; border: none;
+      padding: 8px 16px; border-radius: 8px; cursor: pointer;
+      font-family: 'Cairo', sans-serif; font-weight: 600;
+    }
+    
+    .footer {
+      text-align: center; padding: 20px; color: #9ca3af;
+      font-size: 12px;
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="header">
+    <h1>📊 لوحة التحكم المالية</h1>
+    <div>
+      <span class="badge" id="status-badge">🔄 جاري التحميل</span>
+      <button class="refresh-btn" onclick="location.reload()" style="margin-right:8px;">🔄 تحديث</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p>جاري تحميل البيانات من Google Drive...</p>
+    </div>
+
+    <div id="content" style="display:none;">
+      <div class="kpi-grid" id="kpi-grid"></div>
+      
+      <div class="section">
+        <h2>📋 العملاء (Top 20)</h2>
+        <div style="overflow-x:auto;">
+          <table id="customer-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>العميل</th>
+                <th>المبيعات</th>
+                <th>التحصيل</th>
+                <th>المستحق</th>
+                <th>نسبة التحصيل</th>
+                <th>الحالة</th>
+              </tr>
+            </thead>
+            <tbody id="customer-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="footer" id="last-updated"></div>
+    </div>
+
+    <div id="error" class="error" style="display:none;"></div>
+  </div>
+
+  <script>
+    const DRIVE_URL = "https://drive.google.com/uc?export=download&id=1IlcAYY82Qyi594JHm4ZPmPmIuBf3Hf3u";
+
+    function fmtMoney(n) {
+      return n.toLocaleString("en-EG", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + " ج.م";
+    }
+
+    function fmtPct(n) {
+      return (n * 100).toFixed(1) + "%";
+    }
+
+    async function loadData() {
+      try {
+        const res = await fetch(DRIVE_URL, { cache: "no-store" });
+        if (!res.ok) throw new Error("فشل تحميل البيانات");
+        const seed = await res.json();
+        
+        if (!seed || !Array.isArray(seed.sales) || !Array.isArray(seed.collections)) {
+          throw new Error("بيانات غير صالحة");
+        }
+
+        const allSales = seed.sales || [];
+        const allCol = seed.collections || [];
+        const totalSales = allSales.reduce((s, r) => s + (r.total || 0), 0);
+        const totalCollected = allCol.reduce((s, r) => s + (r.total || 0), 0);
+        const totalReceivables = totalSales - totalCollected;
+        const collectionRate = totalSales > 0 ? totalCollected / totalSales : 0;
+
+        // Build customer map
+        const custMap = new Map();
+        for (const s of allSales) {
+          const key = s.code || s.name;
+          if (!custMap.has(key)) {
+            custMap.set(key, { name: s.name, sales: 0, collected: 0, code: s.code });
+          }
+          custMap.get(key).sales += s.total || 0;
+        }
+
+        for (const c of allCol) {
+          const nk = (c.nameKey || c.name || "").replace(/\s+/g, " ").trim();
+          let matched = false;
+          for (const [k, cust] of custMap) {
+            const cnk = (cust.name || "").replace(/\s+/g, " ").trim();
+            if (nk && cnk && (cnk.includes(nk) || nk.includes(cnk))) {
+              cust.collected += c.total || 0;
+              matched = true;
+              break;
+            }
+          }
+          if (!matched && c.name) {
+            custMap.set("c_" + Math.random().toString(36).slice(2, 8), { name: c.name, sales: 0, collected: c.total || 0, code: "" });
+          }
+        }
+
+        const customers = Array.from(custMap.values())
+          .map(c => ({
+            ...c,
+            outstanding: c.sales - c.collected,
+            rate: c.sales > 0 ? c.collected / c.sales : 0
+          }))
+          .sort((a, b) => b.sales - a.sales);
+
+        const customerCount = customers.filter(c => c.sales > 0).length;
+
+        // Render KPIs
+        document.getElementById("kpi-grid").innerHTML = `
+          <div class="kpi-card">
+            <div class="kpi-label">💰 إجمالي المبيعات</div>
+            <div class="kpi-value">${fmtMoney(totalSales)}</div>
+          </div>
+          <div class="kpi-card success">
+            <div class="kpi-label">✅ إجمالي التحصيل</div>
+            <div class="kpi-value">${fmtMoney(totalCollected)}</div>
+          </div>
+          <div class="kpi-card ${collectionRate >= 0.6 ? 'success' : collectionRate >= 0.4 ? 'warning' : 'danger'}">
+            <div class="kpi-label">📈 نسبة التحصيل</div>
+            <div class="kpi-value">${fmtPct(collectionRate)}</div>
+          </div>
+          <div class="kpi-card danger">
+            <div class="kpi-label">⚠️ إجمالي المستحقات</div>
+            <div class="kpi-value">${fmtMoney(totalReceivables)}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">👥 عدد العملاء</div>
+            <div class="kpi-value">${customerCount}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">📦 إجمالي بيانات التحصيل</div>
+            <div class="kpi-value">${allCol.length} سجل</div>
+          </div>
+        `;
+
+        // Render customer table (top 20 by sales)
+        const top20 = customers.slice(0, 20);
+        document.getElementById("customer-body").innerHTML = top20.map((c, i) => `
+          <tr>
+            <td>${i + 1}</td>
+            <td style="font-weight:600">${c.name}</td>
+            <td>${fmtMoney(c.sales)}</td>
+            <td>${fmtMoney(c.collected)}</td>
+            <td>${fmtMoney(c.outstanding)}</td>
+            <td>${fmtPct(c.rate)}</td>
+            <td>
+              <span class="status ${c.rate >= 0.6 ? 'active' : 'risk'}">
+                ${c.rate >= 0.6 ? 'نشط' : 'خطر'}
+              </span>
+            </td>
+          </tr>
+        `).join("");
+
+        document.getElementById("last-updated").innerHTML = 
+          "🕐 آخر تحديث: " + (seed.meta?.lastUpdated || "غير معروف") + 
+          " | البيانات من Google Drive | تحديث تلقائي كل ساعة";
+
+        // Show content, hide loading
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("content").style.display = "block";
+        document.getElementById("status-badge").innerHTML = "✅ مباشر";
+        document.getElementById("status-badge").style.background = "#10b981";
+
+      } catch (e) {
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("error").style.display = "block";
+        document.getElementById("error").textContent = "⚠️ " + e.message + " — جاري إعادة المحاولة...";
+        document.getElementById("status-badge").innerHTML = "❌ خطأ";
+        document.getElementById("status-badge").style.background = "#ef4444";
+        
+        // Retry after 10 seconds
+        setTimeout(loadData, 10000);
+      }
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

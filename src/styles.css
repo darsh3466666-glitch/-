@@ -1,0 +1,349 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans:
+    "Cairo", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-gold: var(--gold);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+}
+
+:root {
+  --radius: 1rem;
+  /* Flip7 Theme */
+  --background: #EFF8F7;
+  --foreground: #1E8C86;
+  --card: #FFFFFF;
+  --card-foreground: #1E8C86;
+  --popover: #FFF8E7;
+  --popover-foreground: #1E8C86;
+  --primary: #2BA8A2;
+  --primary-foreground: #FFFFFF;
+  --secondary: #FFF8E7;
+  --secondary-foreground: #1E8C86;
+  --muted: #E8F6F5;
+  --muted-foreground: #2BA8A2;
+  --accent: #FFD23F;
+  --accent-foreground: #1E8C86;
+  --gold: #FFD23F;
+  --success: #27AE60;
+  --success-foreground: #FFFFFF;
+  --warning: #FFD23F;
+  --warning-foreground: #1E8C86;
+  --info: #5DADE2;
+  --info-foreground: #FFFFFF;
+  --destructive: #EF6C4A;
+  --destructive-foreground: #FFFFFF;
+  --border: #3CC4BD;
+  --input: #FFF8E7;
+  --ring: #2BA8A2;
+  --chart-1: #FFD23F;
+  --chart-2: #2BA8A2;
+  --chart-3: #5DADE2;
+  --chart-4: #EF6C4A;
+  --chart-5: #27AE60;
+}
+
+.dark {
+  --background: #1E8C86;
+  --foreground: #EFF8F7;
+  --card: #2BA8A2;
+  --card-foreground: #EFF8F7;
+  --popover: #1E8C86;
+  --popover-foreground: #EFF8F7;
+  --primary: #FFD23F;
+  --primary-foreground: #1E8C86;
+  --secondary: #3CC4BD;
+  --secondary-foreground: #EFF8F7;
+  --muted: #1E8C86;
+  --muted-foreground: #3CC4BD;
+  --accent: #FFD23F;
+  --accent-foreground: #1E8C86;
+  --gold: #FFD23F;
+  --success: #27AE60;
+  --success-foreground: #FFFFFF;
+  --warning: #FFD23F;
+  --warning-foreground: #1E8C86;
+  --info: #5DADE2;
+  --info-foreground: #FFFFFF;
+  --destructive: #EF6C4A;
+  --destructive-foreground: #FFFFFF;
+  --border: #2BA8A2;
+  --input: #2BA8A2;
+  --ring: #FFD23F;
+  --chart-1: #FFD23F;
+  --chart-2: #3CC4BD;
+  --chart-3: #5DADE2;
+  --chart-4: #EF6C4A;
+  --chart-5: #27AE60;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    font-family: var(--font-sans);
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-feature-settings: "ss01", "cv11";
+  }
+  [dir="rtl"] {
+    text-align: right;
+  }
+}
+
+@page {
+  size: A4 landscape;
+  margin: 8mm 10mm;
+}
+
+@media print {
+  /* Common overrides */
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+
+  html,
+  body {
+    background: white !important;
+    color: black !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .sticky,
+  header.sticky {
+    position: static !important;
+  }
+
+  main,
+  .container {
+    max-width: none !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  body,
+  main,
+  .container,
+  div,
+  section,
+  article,
+  .card,
+  [class*="rounded-"] {
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+  }
+
+  .card,
+  [class*="rounded-"],
+  table,
+  .recharts-wrapper {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  img,
+  svg {
+    max-width: 100% !important;
+  }
+
+  /* 💻 PC Layout Specifics (Landscape) Only */
+  .print-layout-pc {
+    font-size: 8.5pt !important;
+  }
+  .print-layout-pc .grid {
+    display: grid !important;
+    gap: 6pt !important;
+  }
+  /* KPI and grid cards: 4 columns */
+  .print-layout-pc .grid.grid-cols-2,
+  .print-layout-pc .grid[class*="md:grid-cols-3"],
+  .print-layout-pc .grid[class*="lg:grid-cols-4"],
+  .print-layout-pc .grid[class*="xl:grid-cols-6"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+  /* Charts/Comparisons side-by-side */
+  .print-layout-pc .grid-charts,
+  .print-layout-pc .grid[class*="md:grid-cols-2"],
+  .print-layout-pc .md\:grid-cols-2,
+  .print-layout-pc .grid[class*="lg:grid-cols-2"],
+  .print-layout-pc .lg\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    display: grid !important;
+    gap: 6pt !important;
+  }
+  .print-layout-pc .card {
+    padding: 3pt !important;
+    margin-bottom: 5pt !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+  .print-layout-pc [class*="CardContent"] {
+    padding: 4pt !important;
+  }
+  .print-layout-pc [class*="CardHeader"] {
+    padding: 4pt 6pt 2pt !important;
+  }
+  .print-layout-pc table {
+    width: 100% !important;
+    font-size: 7.5pt !important;
+    table-layout: auto !important;
+  }
+  .print-layout-pc th,
+  .print-layout-pc td {
+    padding: 2pt 3pt !important;
+    white-space: normal !important;
+  }
+  .print-layout-pc .recharts-responsive-container {
+    width: 100% !important;
+    height: 160px !important;
+  }
+
+  /* 📱 Mobile Layout Specifics (Portrait / Stacked / High Readability) Only */
+  .print-layout-mobile {
+    font-size: 11pt !important;
+  }
+  /* Force everything to stack single-column */
+  .print-layout-mobile .grid,
+  .print-layout-mobile .grid.grid-cols-2,
+  .print-layout-mobile .grid[class*="md:grid-cols-"],
+  .print-layout-mobile .grid[class*="lg:grid-cols-"],
+  .print-layout-mobile .grid[class*="xl:grid-cols-"] {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10pt !important;
+  }
+
+  /* KPI cards can be 2 per row for neat stacked spacing on A4 portrait, or single column */
+  .print-layout-mobile .grid-kpis {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8pt !important;
+  }
+
+  .print-layout-mobile .card {
+    padding: 8pt !important;
+    margin-bottom: 10pt !important;
+    border: 1px solid #cbd5e1 !important; /* heavier border for clean printing */
+    border-radius: 8px !important;
+  }
+  .print-layout-mobile [class*="CardContent"] {
+    padding: 8pt !important;
+  }
+  .print-layout-mobile [class*="CardHeader"] {
+    padding: 8pt 8pt 4pt !important;
+  }
+  .print-layout-mobile table {
+    width: 100% !important;
+    font-size: 9.5pt !important;
+    table-layout: auto !important;
+  }
+  .print-layout-mobile th,
+  .print-layout-mobile td {
+    padding: 4pt 5pt !important;
+  }
+  .print-layout-mobile .recharts-responsive-container {
+    width: 100% !important;
+    height: 180px !important;
+  }
+
+  /* Text adjustments to make it clear */
+  .print-layout-mobile .text-xs,
+  .print-layout-mobile .text-muted-foreground {
+    font-size: 9pt !important;
+  }
+  .print-layout-mobile .text-sm {
+    font-size: 10pt !important;
+  }
+  .print-layout-mobile .font-bold {
+    font-weight: 700 !important;
+  }
+  .print-layout-mobile .font-semibold {
+    font-weight: 600 !important;
+  }
+}
+
+.print-only {
+  display: none;
+}
+
+
+@layer utilities {
+  .shadow-card {
+    box-shadow: 0 4px 20px rgba(43, 168, 162, 0.10);
+  }
+  .shadow-coral-glow {
+    box-shadow: 0 4px 20px rgba(239, 108, 74, 0.35);
+  }
+  .shadow-teal-glow {
+    box-shadow: 0 4px 20px rgba(43, 168, 162, 0.30);
+  }
+  .shadow-accent-glow {
+    box-shadow: 0 4px 20px rgba(255, 210, 63, 0.40);
+  }
+  .shadow-sky-glow {
+    box-shadow: 0 4px 16px rgba(93, 173, 226, 0.30);
+  }
+  .shadow-focus {
+    box-shadow: 0 0 0 4px rgba(43, 168, 162, 0.15);
+  }
+}

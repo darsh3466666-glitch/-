@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, useRef } from "react";
 import {
@@ -62,7 +62,6 @@ import {
 } from "recharts";
 import { toast } from "sonner";
 import { exportReportToExcel } from "@/lib/export-excel";
-import { autoInjectFromDrive } from "@/lib/auto-inject";
 import { sortProducts } from "@/lib/product-sorting";
 
 interface DashboardSearchParams {
@@ -86,16 +85,9 @@ function pctDiff(curr: number, prev: number | undefined): number | undefined {
 
 function Dashboard() {
   const { reportId } = Route.useSearch();
-  const [autoReady, setAutoReady] = useState(false);
-
-  useEffect(() => {
-    autoInjectFromDrive().finally(() => setAutoReady(true));
-  }, []);
-
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["latestReport", reportId, autoReady],
+    queryKey: ["latestReport", reportId],
     queryFn: () => getLatestReportFull({ data: { reportId } }),
-    enabled: autoReady,
   });
   const [dark, setDark] = useState(() => {
     if (typeof document !== "undefined") {
@@ -1310,4 +1302,3 @@ function ResetButton({ onDone }: { onDone: () => void }) {
     </AlertDialog>
   );
 }
-

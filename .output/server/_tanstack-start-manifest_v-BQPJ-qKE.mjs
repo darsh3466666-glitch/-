@@ -1,4 +1,0 @@
-const tsrStartManifest = () => ({ routes: { __root__: { filePath: "C:/Users/GoldenTech/.openclaw-autoclaw/workspace/dashboard-repo/src/routes/__root.tsx", children: ["/", "/dashboard", "/history"], preloads: ["/assets/index-DtJYGxy1.js"], scripts: [{ attrs: { type: "module", async: true, src: "/assets/index-DtJYGxy1.js" } }] }, "/": { filePath: "C:/Users/GoldenTech/.openclaw-autoclaw/workspace/dashboard-repo/src/routes/index.tsx", children: void 0, preloads: ["/assets/index-DtqBFgK5.js"] }, "/dashboard": { filePath: "C:/Users/GoldenTech/.openclaw-autoclaw/workspace/dashboard-repo/src/routes/dashboard.tsx", children: void 0, preloads: ["/assets/dashboard-BrV8X7oV.js", "/assets/trash-2-BeG4KQ-o.js"] }, "/history": { filePath: "C:/Users/GoldenTech/.openclaw-autoclaw/workspace/dashboard-repo/src/routes/history.tsx", children: void 0, preloads: ["/assets/history-Cm-TXmBC.js", "/assets/trash-2-BeG4KQ-o.js"] } } });
-export {
-  tsrStartManifest
-};
